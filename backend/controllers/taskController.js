@@ -3,7 +3,8 @@ const Task = require('../model/Task');
 const createTask = async (req, res) => {
   const { title, description } = req.body;
   try {
-    const task = new Task({ title, description });
+    const task = new Task({ title : title,description: description ,userId:req.userId});
+    console.log('task: ', task);
     await task.save();
     res.send({ message: 'Task created successfully' });
   } catch (err) {
@@ -45,9 +46,13 @@ const updateTask = async (req, res) => {
 
 const deleteTask = async (req, res) => {
   try {
-    await Task.findByIdAndRemove(req.params.id);
+    const task = await Task.findByIdAndDelete(req.params.id);
+    if (!task) {
+      return res.status(404).send({ error: 'Task not found' });
+    }
     res.send({ message: 'Task deleted successfully' });
   } catch (err) {
+    console.error(err); // Log the actual error for debugging
     res.status(400).send({ error: 'Failed to delete task' });
   }
 };

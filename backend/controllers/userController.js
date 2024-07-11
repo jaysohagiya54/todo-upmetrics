@@ -1,14 +1,18 @@
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../model/User');
 
 const register = async (req, res) => {
   const { email, password } = req.body;
-  const user = new User({ email, password });
+
   try {
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const user = new User({ email, password: hashedPassword });
     await user.save();
-    res.send({ message: 'User created successfully' });
+    res.json({ message: 'User created successfully' });
   } catch (err) {
+    console.error(err); // Log the actual error for debugging
     res.status(400).send({ error: 'Failed to create user' });
   }
 };
@@ -17,10 +21,18 @@ const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).send({ error: 'Invalid email or password' });
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(401).send({ error: 'Invalid email or password' });
-    const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, { expiresIn: '1h' });
+    console.log('user: ', user);
+    if (user === null) {
+      return res.status(401).send({ error: 'Invalid email or password' });
+    }
+    
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).send({ error: 'Invalid password' });
+    }
+
+    const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY);
+
     res.send({ token });
   } catch (err) {
     res.status(400).send({ error: 'Failed to login' });
@@ -28,34 +40,34 @@ const login = async (req, res) => {
 };
 
 const forgotPassword = async (req, res) => {
-  const { email } = req.body;
+  const { email, newPassword } = req.body;
+
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).send({ error: 'User not found' });
-    // send password reset email
-    res.send({ message: 'Password reset email sent' });
+    console.log('user: ', user);
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    res.send({ message: 'Password updated successfully' });
   } catch (err) {
-    res.status(400).send({ error: 'Failed to send password reset email' });
+    console.error(err); // Log the actual error for debugging
+    res.status(400).send({ error: 'Failed to update password' });
   }
 };
 
-const resetPassword = async (req, res) => {
-  const { password, confirmPassword } = req.body;
-  try {
-    if (password !== confirmPassword) return res.status(400).send({ error: 'Passwords do not match' });
-    const user = await User.findById(req.params.userId);
-    if (!user) return res.status(404).send({ error: 'User not found' });
-    user.password = password;
-    await user.save();
-    res.send({ message: 'Password reset successfully' });
-  } catch (err) {
-    res.status(400).send({ error: 'Failed to reset password' });
-  }
-};
+
+
 
 const updateProfilePicture = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(req.userId);
     if (!user) return res.status(404).send({ error: 'User not found' });
     user.profilePicture = req.file.path;
     await user.save();
@@ -65,4 +77,4 @@ const updateProfilePicture = async (req, res) => {
   }
 };
 
-module.exports = { register, login, forgotPassword, resetPassword, updateProfilePicture };
+module.exports = { register, login, forgotPassword, updateProfilePicture };

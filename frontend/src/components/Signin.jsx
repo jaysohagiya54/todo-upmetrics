@@ -19,7 +19,6 @@ const Signin = () => {
             const response = await axios.post("http://localhost:3000/api/v1/user/login",{
               email,password
             });
-            console.log('response: ', response);
             if(response.status){
                 alert("User Logged in Successfully.")
                 login(response.data.token);
@@ -35,7 +34,6 @@ const Signin = () => {
         const response = await axios.post("http://localhost:3000/api/v1/user/forgot-password",{
                 email,newPassword:newpassword
               });
-              console.log('response: ', response);
               if(response.status){
                   alert("User password changed Successfully.")
                   navigate("/signin")

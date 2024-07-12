@@ -5,14 +5,12 @@ import { useAuth } from '../auth/AuthContext';
 
 const Header = () => {
   const { isAuthenticated, logout } = useAuth();
-  console.log('isAuthenticated: ', isAuthenticated);
 
   return (
     <header>
      { isAuthenticated &&  <nav className='bg-slate-200 border-b '>
         <ul className='flex justify-between flex-row p-4'>
-         
-        
+
           {
          (
             <>

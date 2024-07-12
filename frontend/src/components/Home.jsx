@@ -1,4 +1,3 @@
-// components/Home.js
 import React, { useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -13,46 +12,51 @@ const Home = () => {
 
   const fetchData = async () => {
     try {
-      const boardsResponse = await axios.get('http://localhost:3000/api/v1/taskboard',{headers:{
-        Authorization : localStorage.getItem("token"),
-      }});
-      const tasksResponse = await axios.get('http://localhost:3000/api/v1/task',{headers:{
-        Authorization : localStorage.getItem("token"),
-      }});
+      const boardsResponse = await axios.get('http://localhost:3000/api/v1/taskboard', {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        }
+      });
+      const tasksResponse = await axios.get('http://localhost:3000/api/v1/task', {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        }
+      });
       setData({ boards: boardsResponse.data, tasks: tasksResponse.data });
     } catch (error) {
       console.error('Error fetching data', error);
     }
   };
 
-
   useEffect(() => { 
     fetchData();
   }, []);
 
-  const moveTask = async (taskId, boardId) => {
+  const moveTask = async (taskId, sourceBoardId, targetBoardId) => {
     try {
-      const taskToUpdate = data.tasks.find((task) => task.id === taskId);
-      if (taskToUpdate) {
-        const response = await axios.put(
-          `http://localhost:3000/api/v1/task/${taskId}`,
-          { ...taskToUpdate, boardId },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`, // Assuming your token needs to be prefixed with 'Bearer'
-            },
-          }
-        );
+      await axios.delete(`http://localhost:3000/api/v1/taskboard/${sourceBoardId}/tasks/${taskId}`,{
+        headers: {
+          Authorization: `${localStorage.getItem("token")}`,
+        },
+      });
   
-        // Assuming the API response returns the updated task
-        const updatedTask = response.data;
+      const taskToUpdate = data.tasks.find((task) => task._id === taskId);
+      const addResponse = await axios.post(
+        `http://localhost:3000/api/v1/taskboard/${targetBoardId}/tasks/${taskId}`,
+        { ...taskToUpdate, boardId: targetBoardId },
+        {
+          headers: {
+            Authorization: `${localStorage.getItem("token")}`,
+          },
+        }
+      );
   
-        const updatedTasks = data.tasks.map((task) =>
-          task.id === taskId ? { ...updatedTask } : task
-        );
-  
-        setData({ ...data, tasks: updatedTasks });
-      }
+      const updatedTask = addResponse.data;
+      const updatedTasks = data.tasks.map((task) =>
+        task._id === taskId ? { ...updatedTask } : task
+      );
+      setData({ ...data, tasks: updatedTasks });
+      fetchData();
     } catch (error) {
       console.error('Error moving task', error);
     }
@@ -67,10 +71,11 @@ const Home = () => {
 
     try {
       const newBoard = { name: newBoardTitle, description: newBoardDescription };
-      const response = await axios.post('http://localhost:3000/api/v1/taskboard', newBoard,{headers:{
-        Authorization : localStorage.getItem("token"),
-      }});
-      setData({ ...data, boards: [...data.boards, response.data] });
+      const response = await axios.post('http://localhost:3000/api/v1/taskboard', newBoard, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        }
+      });
       fetchData();
       setNewBoardTitle('');
       setNewBoardDescription('');
@@ -80,13 +85,30 @@ const Home = () => {
     }
   };
 
+  const deleteTaskboard = async (taskboardId) => {
+    try {
+      await axios.delete(`http://localhost:3000/api/v1/taskboard/${taskboardId}`, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        }
+      });
+      const updatedBoards = data.boards.filter((board) => board._id !== taskboardId);
+      setData({ ...data, boards: updatedBoards });
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting taskboard', error);
+    }
+  };
+
   const editTask = async (taskId, updatedTask) => {
     try {
-      await axios.put(`http://localhost:3000/api/v1/task/${taskId}`, updatedTask,{headers:{
-        Authorization : localStorage.getItem("token"),
-      }});
+      await axios.put(`http://localhost:3000/api/v1/task/${taskId}`, updatedTask, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        }
+      });
       const updatedTasks = data.tasks.map((task) =>
-        task.id === taskId ? { ...task, ...updatedTask } : task
+        task._id === taskId ? { ...task, ...updatedTask } : task
       );
       setData({ ...data, tasks: updatedTasks });
       fetchData();
@@ -97,25 +119,26 @@ const Home = () => {
 
   const createTask = async (boardId, newTask) => {
     try {
-      // Step 1: Create the task
-      const taskResponse = await axios.post('http://localhost:3000/api/v1/task', newTask ,{headers:{
-        Authorization : localStorage.getItem("token"),
-      }});
+      const taskResponse = await axios.post('http://localhost:3000/api/v1/task', newTask, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        }
+      });
 
-      const createdTask = taskResponse.data.id;
+      const createdTask = taskResponse.data;
 
-      // Step 2: Add the task to the taskboard
-      if(taskResponse.status){
-        await axios.post(`http://localhost:3000/api/v1/taskboard/${boardId}/tasks/${createdTask}`,{}, { headers:{
-          Authorization : localStorage.getItem("token"),
-        }});
-      } else  {
-        console.error("duhdvchxj error")
+      if (taskResponse.status) {
+        await axios.post(`http://localhost:3000/api/v1/taskboard/${boardId}/tasks/${createdTask.id}`, {}, {
+          headers: {
+            Authorization: localStorage.getItem("token"),
+          }
+        });
+      } else {
+        console.error("Error creating task");
       }
 
-      // Step 3: Update local state
       setData({ ...data, tasks: [...data.tasks, { ...createdTask, boardId }] });
-    fetchData();
+      fetchData();
     } catch (error) {
       console.error('Error creating task', error);
     }
@@ -123,10 +146,12 @@ const Home = () => {
 
   const deleteTask = async (taskId) => {
     try {
-      await axios.delete(`http://localhost:3000/api/v1/task/${taskId}`,{headers:{
-        Authorization : localStorage.getItem("token"),
-      }});
-      const updatedTasks = data.tasks.filter((task) => task.id !== taskId);
+      await axios.delete(`http://localhost:3000/api/v1/task/${taskId}`, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        }
+      });
+      const updatedTasks = data.tasks.filter((task) => task._id !== taskId);
       setData({ ...data, tasks: updatedTasks });
       fetchData();
     } catch (error) {
@@ -136,7 +161,6 @@ const Home = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      {console.log("boards: ",data.boards)}
       <h3 className="text-2xl font-thin text-center p-4 mb-4">Your taskboards are here.</h3>
       <div className="flex m-4 gap-4 px-20 py-2">
         {data.boards.map((board) => {
@@ -150,6 +174,7 @@ const Home = () => {
               editTask={editTask}
               deleteTask={deleteTask}
               createTask={createTask}
+              deleteTaskboard={deleteTaskboard}
             />
           );
         })}
@@ -184,7 +209,6 @@ const Home = () => {
             placeholder="Description"
             value={newBoardDescription}
             className='m-2 p-1 rounded-md w-52'
-
             onChange={(e) => setNewBoardDescription(e.target.value)}
           />
           <button onClick={addBoard} className='bg-slate-300 px-2 m-2 rounded-md'>Add Taskboard</button>

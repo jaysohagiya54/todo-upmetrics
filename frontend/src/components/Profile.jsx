@@ -41,17 +41,17 @@ const Profile = () => {
   };
 
   return (
-    <div className='flex justify-center items-center content-center my-32'>
-      <form className='p-4 flex flex-col items-center justify-center shadow-lg' onSubmit={handleSubmit}>
+    <div className='flex justify-center items-center content-center my-32 p-4'>
+      <form className='px-8 py-6 flex flex-col items-center justify-center shadow-lg ' onSubmit={handleSubmit}>
         <span className='text-2xl font-extralight'> Update Profile  </span>
-        <div className='w-full my-4'>
+        <div className='w-64 my-4'>
           <LabelInput type='text' placeholder='name' value={name} onChange={(e) => setName(e.target.value)} />
         </div>
-       <div className='flex gap-5 items-center'>
-       <input type='file' className='bg-slate-100 rounded-md p-3 mt-2 mb-6' onChange={handleImageChange} />
-       {previewImage && <img src={previewImage} alt="Preview" className="w-16 h-16 ml-4 rounded-full" />}
+       <div className='flex gap-5 items-center w-64 mb-4'>
+       <input type='file' className='bg-slate-100 rounded-md p-3' onChange={handleImageChange} />
+       {previewImage && <img src={previewImage} alt="Preview" className="w-16 h-10 rounded-full" />}
        </div>
-        <button type='submit' className='px-32 rounded-md bg-black text-white py-2'>Submit</button>
+        <button type='submit' className='px-24 rounded-md bg-black text-white py-2'>Submit</button>
       </form>
     </div>
   );

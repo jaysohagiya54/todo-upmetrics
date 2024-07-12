@@ -4,9 +4,8 @@ const createTask = async (req, res) => {
   const { title, description } = req.body;
   try {
     const task = new Task({ title : title,description: description ,userId:req.userId});
-    console.log('task: ', task);
     await task.save();
-    res.send({ message: 'Task created successfully' });
+    res.send({ id: task._id, message: 'Task created successfully' });
   } catch (err) {
     res.status(400).send({ error: 'Failed to create task' });
   }

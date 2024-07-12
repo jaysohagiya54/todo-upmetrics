@@ -7,13 +7,15 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
-
-  const login = () => {
+  
+  const login = (token) => {
+    localStorage.setItem("token", "Bearer " + token);
     setIsAuthenticated(true);
     navigate('/');
   };
 
   const logout = () => {
+    localStorage.removeItem("token");
     setIsAuthenticated(false);
     navigate('/signin');
   };

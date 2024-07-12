@@ -6,23 +6,26 @@ import PrivateRoute from './auth/PrivateRoute';
 import Signin from './components/Signin';
 import Home from './components/Home';
 import Signup from './components/Signup';
+import Layout from './components/Layout';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
-          <Route path="/signin" element={<Signin/>} />
-          <Route path="/signup" element={<Signup />} />
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Home />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
+      <Layout>
+          <Routes>
+            <Route path="/signin" element={<Signin />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <Home />
+                </PrivateRoute>
+              }
+            />
+          </Routes>
+        </Layout>
       </AuthProvider>
     </Router>
   );

@@ -25,7 +25,6 @@ const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    console.log('user: ', user);
     if (user === null) {
       return res.status(401).send({ error: 'Invalid email or password' });
     }
@@ -48,7 +47,6 @@ const forgotPassword = async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
-    console.log('user: ', user);
     if (!user) {
       return res.status(404).send({ error: 'User not found' });
     }
@@ -73,12 +71,21 @@ const updateProfilePicture = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).send({ error: 'User not found' });
-    user.profilePicture = req.file.path;
+
+    if (req.body.name) {
+      user.name = req.body.name;
+    }
+
+    if (req.file) {
+      user.profilePicture = req.file.path;
+    }
+
     await user.save();
-    res.send({ message: 'Profile picture updated successfully' });
+    res.send({ message: 'Profile updated successfully' });
   } catch (err) {
-    res.status(400).send({ error: 'Failed to update profile picture' });
+    res.status(400).send({ error: 'Failed to update profile' });
   }
 };
+
 
 module.exports = { register, login, forgotPassword, updateProfilePicture };

@@ -7,6 +7,7 @@ import Signin from './components/Signin';
 import Home from './components/Home';
 import Signup from './components/Signup';
 import Layout from './components/Layout';
+import Profile from './components/Profile';
 
 function App() {
   return (
@@ -21,6 +22,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <Home />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <Profile />
                 </PrivateRoute>
               }
             />

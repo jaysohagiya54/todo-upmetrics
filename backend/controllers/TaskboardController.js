@@ -5,7 +5,6 @@ const createTaskboard = async (req, res) => {
   const { name, description } = req.body;
   try {
     const taskboard = new Taskboard({ name, description, userId: req.userId }); // assuming userId is in req.token
-    console.log('taskboard: ', taskboard);
     await taskboard.save();
     res.send({ message: 'Taskboard created successfully' });
   } catch (err) {
